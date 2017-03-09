@@ -9,21 +9,16 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
-
-import com.google.android.gms.tasks.Task;
 
 import zladnrms.defytech.forcoupon.R;
 
 /**
  * Created by kim on 2016-05-31.
  */
-public class StickerView extends ImageView implements View.OnTouchListener {
+public class StickerView_backup_rotateonly_nam_um extends ImageView implements View.OnTouchListener {
 
     private Context context;
 
@@ -33,9 +28,6 @@ public class StickerView extends ImageView implements View.OnTouchListener {
     private int sv_w, sv_h; // 스티커 너비, 높이
     private int bitmapWidth, bitmapHeight; // 스티커 비트맵 원본 너비, 높이
     private float sv_cx, sv_cy; // 스티커 중심좌표 (matrix scale용)
-    private String type; // 스티커 타입
-    private float transparentPercent = 0;
-    private int transparentInt = 0;
 
     private Bitmap stickerbitmap;
     private Bitmap touchHelperBitmap;
@@ -44,12 +36,8 @@ public class StickerView extends ImageView implements View.OnTouchListener {
     private Rect rect; // 네모 영역 rect
     private Rect rect_helper;
 
-    private boolean canTouch = false; // 쿠폰 에디터의 레이어 설정으로 인한 터치 가능 여부
     private boolean onTouch = false;
     private boolean onHelperTouch = false;
-
-    private int TaskMode = 0; // 0 : 확장, 회전 둘 다 가능, 1 : 확장만 가능, 2 : 회전만 가능
-    private int visible = 1;
     //
 
     // these matrices will be used to move and zoom image
@@ -68,7 +56,7 @@ public class StickerView extends ImageView implements View.OnTouchListener {
     private float newRot = 0f;
     private float[] lastEvent = null;
 
-    public StickerView(Context context) {
+    public StickerView_backup_rotateonly_nam_um(Context context) {
         super(context);
         this.context = context;
 
@@ -89,9 +77,16 @@ public class StickerView extends ImageView implements View.OnTouchListener {
 
             canvas.drawRect(rect , paint);
             canvas.drawBitmap(touchHelperBitmap, null, rect_helper, null);
+
+            System.out.println("정보 : " + this.sv_x);
         }
 
         canvas.restore();
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
     }
 
     @Override
@@ -142,24 +137,8 @@ public class StickerView extends ImageView implements View.OnTouchListener {
         return this.sv_h;
     }
 
-    public boolean getCanTouch(){
-        return this.canTouch;
-    }
-
-    public void setCanTouch(boolean _touch){
-        this.canTouch = _touch;
-    }
-
     public boolean getOnTouch() {
         return onTouch;
-    }
-
-    public void setType(String _type){
-        this.type = _type;
-    }
-
-    public String getType(){
-        return this.type;
     }
 
     // 자신이 터치 되었을 때
@@ -168,75 +147,16 @@ public class StickerView extends ImageView implements View.OnTouchListener {
         invalidate();
     }
 
-    public float getTransparentPercent(){
-        return this.transparentInt;
-    }
-
-    // 자신이 터치 되었을 때
-    public void setTransparentPercent(int _percent) {
-        this.transparentInt = _percent;
-        String temp = "0." + String.valueOf(_percent);
-        this.transparentPercent = Float.valueOf(temp);
-        System.out.println(temp);
-        setAlpha(transparentPercent);
-    }
-
     public boolean onTouch(View v, MotionEvent event) {
-
-        final float X = event.getX();
-        final float Y = event.getY();
-
-        System.out.println("클릭 X : " + X + ", Y : " + Y );
-        System.out.println("좌표 X : " + sv_x + ", Y : " + sv_y);
-        System.out.println("좌표 X : " + (X + sv_w) + ", Y : " + (Y + sv_h));
-
-        // 화면 터치 시에 자신을 클릭하는 것인지 파악함
-        switch (event.getAction() & MotionEvent.ACTION_MASK) {
-
-            case MotionEvent.ACTION_DOWN:
-                if(X > this.sv_x && X < this.sv_x + this.sv_w && Y > this.sv_y && Y < this.sv_y + this.sv_h){
-                    onTouch = true;
-                } else {
-                    onTouch = false;
-                }
-                break;
-
-            case MotionEvent.ACTION_UP:
-                onTouch = false;
-                break;
-        }
-
-        invalidate();
-
         if (onTouch) {
             ImageView view = (ImageView) v;
-
-            // 터치 헬퍼 클릭 시
-            if(X > this.sv_x + this.sv_w - 50 && X < this.sv_x + this.sv_w + 50 && Y > this.sv_y + this.sv_h - 50 && Y < this.sv_y + this.sv_h + 50){
-                /*
-                switch (TaskMode){
-                    case 0:
-                        TaskMode = 1;
-                        break;
-                    case 1:
-                        TaskMode = 2;
-                        break;
-                    case 2:
-                        TaskMode = 0;
-                        break;
-                }
-                */
-            }
-
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
-
                 case MotionEvent.ACTION_DOWN:
                     savedMatrix.set(matrix);
                     start.set(event.getX(), event.getY());
                     mode = DRAG;
                     lastEvent = null;
                     break;
-
                 case MotionEvent.ACTION_POINTER_DOWN:
                     oldDist = spacing(event);
                     if (oldDist > 10f) {
@@ -251,17 +171,14 @@ public class StickerView extends ImageView implements View.OnTouchListener {
                     lastEvent[3] = event.getY(1);
                     d = rotation(event);
                     break;
-
                 case MotionEvent.ACTION_UP:
                     onHelperTouch = false;
                     onTouch = false;
                     invalidate();
-
                 case MotionEvent.ACTION_POINTER_UP:
                     mode = NONE;
                     lastEvent = null;
                     break;
-
                 case MotionEvent.ACTION_MOVE:
                     if (mode == DRAG) {
                         matrix.set(savedMatrix);
@@ -273,7 +190,7 @@ public class StickerView extends ImageView implements View.OnTouchListener {
                         setInitByMatrix(values);
                     } else if (mode == ZOOM) {
                         float newDist = spacing(event);
-                        if (newDist > 10f/* && (TaskMode == 0 || TaskMode == 1)*/) {
+                        if (newDist > 10f) {
                             matrix.set(savedMatrix);
                             float scale = (newDist / oldDist);
                             matrix.postScale(scale, scale, mid.x, mid.y);
@@ -281,7 +198,7 @@ public class StickerView extends ImageView implements View.OnTouchListener {
                             matrix.getValues(values);
                             setInitByMatrix(values);
                         }
-                        if (lastEvent != null && event.getPointerCount() == 2/* && (TaskMode == 0 || TaskMode == 2)*/) {
+                        if (lastEvent != null && event.getPointerCount() == 2) {
                             newRot = rotation(event);
                             float r = newRot - d;
                             float[] values = new float[9];
@@ -289,8 +206,8 @@ public class StickerView extends ImageView implements View.OnTouchListener {
                             float tx = values[2];
                             float ty = values[5];
                             float sx = values[0];
-                            float xc = (this.sv_w / 2) * sx;
-                            float yc = (this.sv_h / 2) * sx;
+                            float xc = (view.getWidth() / 2) * sx;
+                            float yc = (view.getHeight() / 2) * sx;
                             matrix.postRotate(r, tx + xc, ty + yc);
                             setInitByMatrix(values);
                         }

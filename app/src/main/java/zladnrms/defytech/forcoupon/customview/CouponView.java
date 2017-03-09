@@ -1,5 +1,6 @@
 package zladnrms.defytech.forcoupon.customview;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -8,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.util.FloatMath;
 import android.util.Log;
@@ -38,6 +40,12 @@ public class CouponView extends ImageView {
         this.context = context;
     }
 
+    // FOR LOLLIPOP, http://stackoverflow.com/questions/27674701/why-do-we-need-a-4th-constructor-for-lollipop 참고
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public CouponView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -45,44 +53,10 @@ public class CouponView extends ImageView {
         // 쿠폰 사진이 있으면
         if (this.bitmap != null) {
 
-            canvas.drawBitmap(scaleCenterCrop(this.bitmap, cv_h, cv_w), 0, 0, null);
+            canvas.drawBitmap(this.bitmap, 0, 0, null);
         }
 
         canvas.save();
-    }
-
-    // ImageView의 scaletype="CenterCrop" 과 같은 기능하는 소스, (사진 Bitmap, 원판의 height, width)
-    public Bitmap scaleCenterCrop(Bitmap source, int newHeight, int newWidth) {
-        int sourceWidth = source.getWidth();
-        int sourceHeight = source.getHeight();
-
-        // Compute the scaling factors to fit the new height and width, respectively.
-        // To cover the final image, the final scaling will be the bigger
-        // of these two.
-        float xScale = (float) newWidth / sourceWidth;
-        float yScale = (float) newHeight / sourceHeight;
-        float scale = Math.max(xScale, yScale);
-
-        // Now get the size of the source bitmap when scaled
-        float scaledWidth = scale * sourceWidth;
-        float scaledHeight = scale * sourceHeight;
-
-        // Let's find out the upper left coordinates if the scaled bitmap
-        // should be centered in the new size give by the parameters
-        float left = (newWidth - scaledWidth) / 2;
-        float top = (newHeight - scaledHeight) / 2;
-
-        // The target rectangle for the new, scaled version of the source bitmap will now
-        // be
-        RectF targetRect = new RectF(left, top, left + scaledWidth, top + scaledHeight);
-
-        // Finally, we create a new bitmap of the specified size and draw our new,
-        // scaled bitmap onto it.
-        Bitmap dest = Bitmap.createBitmap(newWidth, newHeight, source.getConfig());
-        Canvas canvas = new Canvas(dest);
-        canvas.drawBitmap(source, null, targetRect, null);
-
-        return dest;
     }
 
     // 스티커 Bitmap 세팅
@@ -100,156 +74,48 @@ public class CouponView extends ImageView {
         this.cv_h = this.bitmap.getHeight();
     }
 
-    /*
-    public boolean onTouchEvent(MotionEvent event) {
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
-        int action = event.getAction(); // 현재의 터치 액션의 종류를 받아온다.
-        float x, y; // 터치 된 x, y좌표
-
-        x = event.getX(); // 해당 뷰 내에서의 좌표를 받아옴
-        y = event.getY();
-
-        Log.d("터치 좌표", "x좌표 : " + x + " || y좌표 : " + y);
-
-        boolean moveOk = false; // 움직일 수 있는 상황일 때 true
-        boolean sizeOk = false; // 확장 / 축소 시킬 수 있는 상황일 때 true
-
-        switch (phase) {
-            case 0: // 쿠폰 phase
+        // height 진짜 크기 구하기
+        int heightMode = MeasureSpec.EXACTLY;
+        int heightSize = 0;
+        switch(heightMode) {
+            case MeasureSpec.UNSPECIFIED:    // mode 가 셋팅되지 않은 크기가 넘어올때
+                heightSize = heightMeasureSpec;
                 break;
-            case 1: // 텍스트 phase
-                int textNum = 0; // 움직일 대상 텍스트
-
-                for (int i = 0; i < textArr.size(); i++) { // 터치한 곳에 있는 텍스트를 찾는다
-                    if (x > textArr.get(i).getX() && x < textArr.get(i).getX() + textArr.get(i).getTextWidth() && y > textArr.get(i).getY() && y < textArr.get(i).getY() + textArr.get(i).getTextHeight()) {
-                        textNum = textArr.get(i).getNum(); // 해당 텍스트가 무엇인지 받음
-                        moveOk = true;
-                        break;
-                    } else {
-                        moveOk = false;
-                    }
-                }
-
-                switch (action) { // 액션의 종류에 따른 역할 수행
-                    case MotionEvent.ACTION_DOWN:
-                        x = event.getRawX(); // 해당 뷰 내에서의 좌표를 받아옴
-                        y = event.getRawY();
-                        System.out.println("DOWN : x : " + x + ", y : " + y);
-                        break;
-                    case MotionEvent.ACTION_MOVE: // 드래그 되었을 때의 이벤트 처리
-
-                        // 움직이기
-                        if (moveOk) { // 움직일 수 있는 상황이라면
-
-                            if (textArr.get(textNum).getPrevX() > 0 && textArr.get(textNum).getPrevY() > 0) {
-                                textArr.get(textNum).setX(x, textArr.get(textNum).getPrevX()); // 그만큼 이동하기 위해
-                                textArr.get(textNum).setY(y, textArr.get(textNum).getPrevY());
-                            }
-
-                            // 현재의 좌표들이 지난 좌표가 된다.
-                            textArr.get(textNum).setPrevX(x);
-                            textArr.get(textNum).setPrevY(y);
-
-                            // 좌표 이동이 끝났으면 화면을 갱신한다.
-                            invalidate();
-                        }
-                        break;
-                }
+            case MeasureSpec.AT_MOST:        // wrap_content (뷰 내부의 크기에 따라 크기가 달라짐)
+                heightSize = 0;
                 break;
-            case 2: // 스티커 phase
-                int stickerNum = 0; // 움직일 대상 스티커
-
-                for (int i = 0; i < stickerArr.size(); i++) { // 터치한 곳에 있는 스티커를 찾는다
-                    if (x > stickerArr.get(i).getX() && x < stickerArr.get(i).getX() + stickerArr.get(i).getStickerWidth() && y > stickerArr.get(i).getY() && y < stickerArr.get(i).getY() + stickerArr.get(i).getStickerHeight()) {
-                        stickerNum = stickerArr.get(i).getNum(); // 해당 스티커가 무엇인지 받음
-                        moveOk = true;
-                        break;
-                    } else {
-                        moveOk = false;
-                    }
-                }
-
-
-                for (int i = 0; i < stickerArr.size(); i++) { // 터치한 곳에 있는 스티커의 화살표를 찾는다
-                    if (x > stickerArr.get(i).getArrowX() && x < stickerArr.get(i).getArrowX() + stickerArr.get(i).getArrowWidth() && y > stickerArr.get(i).getArrowY() && y < stickerArr.get(i).getArrowY() + stickerArr.get(i).getArrowHeight()) {
-                        stickerNum = stickerArr.get(i).getNum(); // 해당 스티커가 무엇인지 받음
-                        sizeOk = true;
-                        break;
-                    } else {
-                        sizeOk = false;
-                    }
-                }
-
-
-                switch (action) { // 액션의 종류에 따른 역할 수행
-                    case MotionEvent.ACTION_DOWN:
-                        x = event.getRawX(); // 해당 뷰 내에서의 좌표를 받아옴
-                        y = event.getRawY();
-                        System.out.println("DOWN : x : " + x + ", y : " + y + "DOWN@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-                        break;
-                    case MotionEvent.ACTION_MOVE: // 드래그 되었을 때의 이벤트 처리
-
-                        // 움직이기
-                        if (moveOk) { // 움직일 수 있는 상황이라면
-
-                            if (stickerArr.get(stickerNum).getPrevX() > 0 && stickerArr.get(stickerNum).getPrevY() > 0) {
-                                stickerArr.get(stickerNum).setX(x, stickerArr.get(stickerNum).getPrevX()); // 그만큼 이동하기 위해
-                                stickerArr.get(stickerNum).setY(y, stickerArr.get(stickerNum).getPrevY());
-                            }
-
-                            // 현재의 좌표들이 지난 좌표가 된다.
-                            stickerArr.get(stickerNum).setPrevX(x);
-                            stickerArr.get(stickerNum).setPrevY(y);
-
-
-                            System.out.println("넓이, 높이 :" + stickerArr.get(stickerNum).getStickerWidth() + "." + stickerArr.get(stickerNum).getStickerHeight());
-
-                            float arrowx = stickerArr.get(stickerNum).getX() + stickerArr.get(stickerNum).getStickerWidth();
-                            float arrowy = stickerArr.get(stickerNum).getY() + stickerArr.get(stickerNum).getStickerHeight();
-
-                            if (stickerArr.get(stickerNum).getArrowPrevX() > 0 && stickerArr.get(stickerNum).getArrowPrevY() > 0) {
-                                stickerArr.get(stickerNum).setArrowX(arrowx, stickerArr.get(stickerNum).getArrowPrevX()); // 그만큼 이동하기 위해
-                                stickerArr.get(stickerNum).setArrowY(arrowy, stickerArr.get(stickerNum).getArrowPrevY());
-                            }
-
-                            // 현재의 좌표들이 지난 좌표가 된다.
-                            stickerArr.get(stickerNum).setArrowPrevX(arrowx);
-                            stickerArr.get(stickerNum).setArrowPrevY(arrowy);
-
-                            // 좌표 이동이 끝났으면 화면을 갱신한다.
-                            invalidate();
-                        }
-
-
-                        // 사이즈 확장 / 축소
-                        if (sizeOk) {
-
-                            stickerArr.get(stickerNum).setStickerWidth(x);
-                            stickerArr.get(stickerNum).setStickerHeight(y);
-
-                            float arrowx = stickerArr.get(stickerNum).getX() + stickerArr.get(stickerNum).getStickerWidth();
-                            float arrowy = stickerArr.get(stickerNum).getY() + stickerArr.get(stickerNum).getStickerHeight();
-
-                            if (stickerArr.get(stickerNum).getArrowPrevX() > 0 && stickerArr.get(stickerNum).getArrowPrevY() > 0) {
-                                stickerArr.get(stickerNum).setArrowX(arrowx, stickerArr.get(stickerNum).getArrowPrevX()); // 그만큼 이동하기 위해
-                                stickerArr.get(stickerNum).setArrowY(arrowy, stickerArr.get(stickerNum).getArrowPrevY());
-                            }
-
-                            System.out.println("넓이, 높이 :" + stickerArr.get(stickerNum).getStickerWidth() + "." + stickerArr.get(stickerNum).getStickerHeight());
-
-                            // 현재의 좌표들이 지난 좌표가 된다.
-                            stickerArr.get(stickerNum).setArrowPrevX(arrowx);
-                            stickerArr.get(stickerNum).setArrowPrevY(arrowy);
-
-                            // 좌표 이동이 끝났으면 화면을 갱신한다.
-                            invalidate();
-                        }
-                        break;
-
-                }
+            case MeasureSpec.EXACTLY:        // fill_parent, match_parent (외부에서 이미 크기가 지정되었음)
+                heightSize = MeasureSpec.getSize(heightMeasureSpec);
                 break;
         }
-        return true;
+
+        // width 진짜 크기 구하기
+        int widthMode =  MeasureSpec.EXACTLY;
+        int widthSize = 0;
+        switch(widthMode) {
+            case MeasureSpec.UNSPECIFIED:    // mode 가 셋팅되지 않은 크기가 넘어올때
+                widthSize = widthMeasureSpec;
+                break;
+            case MeasureSpec.AT_MOST:        // wrap_content (뷰 내부의 크기에 따라 크기가 달라짐)
+                widthSize = 0;
+                break;
+            case MeasureSpec.EXACTLY:        // fill_parent, match_parent (외부에서 이미 크기가 지정되었음)
+                widthSize = MeasureSpec.getSize(widthMeasureSpec);
+                break;
+        }
+
+        setMeasuredDimension(widthSize, heightSize);
+        System.out.println("CouponView-onMeasure  : " + widthSize + " : " + heightSize );
     }
-    */
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+
+        Log.v("CouponView-onLayout", "rect : (x, y, w, h) : " + this.getLeft() + " " + this.getTop() + " " + (this.getRight()-this.getLeft()) + " " + (this.getBottom()-this.getRight()));
+    }
 }

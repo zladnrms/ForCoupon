@@ -16,8 +16,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".App_main"
-            android:screenOrientation="portrait">
+            android:name=".main.App_main"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -26,11 +27,11 @@
         </activity>
         <activity
             android:name=".App_couponedit"
-            android:screenOrientation="portrait"
+            android:screenOrientation="landscape"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".App_test"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="landscape" />
         <!--
  ATTENTION: This was auto-generated to add Google Play services to your project for
      App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -39,7 +40,11 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <activity android:name=".App_couponedit$app_test2" />
+        <activity android:name=".chat.App_chatroom"></activity>
+
+        <!-- Crop Image Activity-->
+        <activity android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
+            android:theme="@style/Base.Theme.AppCompat"/> <!-- optional (needed if default theme has no action bar) -->
     </application>
 
 </manifest>

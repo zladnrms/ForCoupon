@@ -17,6 +17,8 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -30,6 +32,8 @@ import android.widget.TextView;
 
 import com.jrummyapps.android.colorpicker.ColorPickerDialog;
 import com.jrummyapps.android.colorpicker.ColorPickerDialogListener;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 import com.victor.loading.rotate.RotateLoading;
 
 import org.json.JSONArray;
@@ -65,10 +69,11 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
     private ArrayList<BgrdInfo> bgrdlist;
     private BgrdlistAdapter rv_bgrdadapter;
 
-    // 쿠폰 추가 컨텐츠 리스트
-    private RecyclerView rv_contentlist;
-    private ArrayList<ContentInfo> contentlist;
-    private ContentlistAdapter rv_contentadapter;
+    // 추가한 스티커 리스트
+    private RecyclerView rv_stickerlist;
+    private StickerlistAdapter rv_stickeradapter;
+    private LinearLayout llayout_coupon_stickerlist;
+    private Button btn_coupon_list;
 
     // 레이어
     private Button btn_layer;
@@ -81,7 +86,7 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
     private int layer = 0; // 현재 레이어 (0 : 쿠폰, 1 : 텍스트, 2 : 스티커)
 
     // 쿠폰 컨텐츠 관련 객체
-    private Button btn_add, btn_save;
+    private Button btn_add, btn_save, btn_back;
     private Button btn_coupon_couponclose;
 
     // 텍스트 컨텐츠 관련 객체
@@ -95,7 +100,6 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
     // 스티커 컨텐츠 관련 객체
     private ArrayList<StickerView> svList = new ArrayList<StickerView>();
     private LinearLayout llayout_coupon_sticker;
-    private Button btn_coupon_stickeradd;
     private Button btn_coupon_stickerclose;
 
     private static final int ADD_IMAGE = 0; // 상수
@@ -130,14 +134,15 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
         rv_bgrdlist.setLayoutManager(verticalLayoutmanager);
         rv_bgrdlist.setAdapter(rv_bgrdadapter);
 
-        // 추가한 콘텐츠 리스트
-        rv_contentlist = (RecyclerView) findViewById(R.id.rv_coupon_contentlist);
-        contentlist = new ArrayList<>();
-        rv_contentadapter = new ContentlistAdapter(contentlist);
+        // 추가한 스티커 리스트
+        rv_stickerlist = (RecyclerView) findViewById(R.id.rv_coupon_stickerlist);
+        rv_stickeradapter = new StickerlistAdapter(svList);
         LinearLayoutManager verticalLayoutmanager2
                 = new LinearLayoutManager(App_couponedit.this, LinearLayoutManager.VERTICAL, false);
-        rv_contentlist.setLayoutManager(verticalLayoutmanager2);
-        rv_contentlist.setAdapter(rv_contentadapter);
+        rv_stickerlist.setLayoutManager(verticalLayoutmanager2);
+        rv_stickerlist.setAdapter(rv_stickeradapter);
+        llayout_coupon_stickerlist = (LinearLayout) findViewById(R.id.llayout_coupon_stickerlist);
+
 
         // 레이어 열기 / 닫기 버튼
         btn_layer = (Button) findViewById(R.id.btn_layer);
@@ -145,16 +150,17 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
         btn_layer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(layerOpen){
+                if (layerOpen) {
                     llayout_layer.setVisibility(View.GONE);
                     layerOpen = false;
-                }else{
+                } else {
                     llayout_layer.setVisibility(View.VISIBLE);
                     layerOpen = true;
                 }
             }
         });
 
+        /*
         llayout_couponview.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
@@ -177,7 +183,7 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
                         break;
                     case 2: // 스티커 레이어
                         for(int i = 0; i < svList.size(); i ++) {
-                            if( X > svList.get(i).getX() && X < svList.get(i).getX() + svList.get(i).getSv_w() && Y > svList.get(i).getY() && Y < svList.get(i).getY() + svList.get(i).getSv_h()){
+                            if( X > svList.get(i).getSv_x() && X < svList.get(i).getSv_x() + svList.get(i).getSv_w() && Y > svList.get(i).getSv_y() && Y < svList.get(i).getSv_y() + svList.get(i).getSv_h()){
                                 svList.get(i).setOnTouch(true);
                                 break;
                             }
@@ -188,6 +194,7 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
                 return false;
             }
         });
+        */
 
         // 쿠폰 레이어 버튼
         btn_coupon_couponphase = (Button) findViewById(R.id.btn_coupon_couponphase);
@@ -261,7 +268,7 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
             public void onClick(View view) {
                 String content = et_coupon_textcontent.getText().toString();
                 Integer size = null;
-                if(!et_coupon_textsize.getText().toString().equals("")){
+                if (!et_coupon_textsize.getText().toString().equals("")) {
                     size = Integer.valueOf(et_coupon_textsize.getText().toString().trim());
                 }
                 String color = textColor;
@@ -328,19 +335,29 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
 
         // 스티커 추가
         llayout_coupon_sticker = (LinearLayout) findViewById(R.id.llayout_coupon_sticker);
-        btn_coupon_stickeradd = (Button) findViewById(R.id.btn_coupon_stickeradd);
-        btn_coupon_stickeradd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // 스티커 뷰를 동적 생성하여 레이아웃에 추가한다.
-                Bitmap stickerBm = BitmapFactory.decodeResource(getResources(), R.drawable.smile); // 세팅할 비트맵 가져오기
-                StickerView stickerView = new StickerView(App_couponedit.this); // 객체 생성
-                stickerView.setStickerbitmap(stickerBm); // 비트맵 세팅
-                llayout_couponview.addView(stickerView); // 레이아웃에 추가
 
-                svList.add(stickerView); // 스티커뷰 리스트에 추가한다.
+        Button btn_ribbon_0 = (Button) findViewById(R.id.sticker_0);
+        Button btn_ribbon_1 = (Button) findViewById(R.id.sticker_1);
+        Button btn_ribbon_2 = (Button) findViewById(R.id.sticker_2);
+        btn_ribbon_0.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectSticker(0);
             }
         });
+        btn_ribbon_1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectSticker(1);
+            }
+        });
+        btn_ribbon_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectSticker(2);
+            }
+        });
+
         // 스티커 에디터 닫기
         btn_coupon_stickerclose = (Button) findViewById(R.id.btn_coupon_stickerclose);
         btn_coupon_stickerclose.setOnClickListener(new View.OnClickListener() {
@@ -349,6 +366,78 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
                 llayout_stickereditor.setVisibility(View.GONE);
             }
         });
+
+        btn_coupon_list = (Button) findViewById(R.id.btn_coupon_stickerlist);
+        btn_coupon_list.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controlListLayout();
+            }
+        });
+
+        btn_back = (Button) findViewById(R.id.btn_back);
+        btn_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+    }
+
+    private void selectSticker(int kind) {
+
+        Bitmap stickerBm = null;
+        String stickerType = null;
+
+        switch (layer) {
+            case 2: // 스티커 레이어
+                switch (kind) {
+                    case 0:
+                        stickerBm = BitmapFactory.decodeResource(getResources(), R.drawable.smile);
+                        stickerType = "스마일";
+                        break;
+                    case 1:
+                        stickerBm = BitmapFactory.decodeResource(getResources(), R.drawable.ribbon_0);
+                        stickerType = "긴 리본";
+                        break;
+                    case 2:
+                        stickerBm = BitmapFactory.decodeResource(getResources(), R.drawable.ribbon_1);
+                        stickerType = "짧은 리본";
+                        break;
+                }
+                break;
+        }
+
+        // 스티커 뷰를 동적 생성하여 레이아웃에 추가한다.
+        StickerView stickerView = new StickerView(App_couponedit.this); // 객체 생성
+        //stickerView.setStickerbitmap(stickerBm); // 비트맵 세팅
+        stickerView.setImageBitmap(stickerBm);
+        llayout_couponview.addView(stickerView); // 레이아웃에 추가
+
+        svList.add(stickerView); // 스티커뷰 리스트에 추가한다.
+        svList.get(svList.size() - 1).setImageBitmap(stickerBm);
+        svList.get(svList.size() - 1).setType(stickerType);
+        rv_stickeradapter.notifyDataSetChanged();
+    }
+
+    private void controlListLayout() {
+        FrameLayout.LayoutParams lparam = new FrameLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        final int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics());
+        lparam.height = height;
+        lparam.gravity = Gravity.BOTTOM;
+
+        FrameLayout.LayoutParams lparam2 = new FrameLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lparam2.gravity = Gravity.BOTTOM;
+
+        if (rv_stickerlist.getVisibility() == View.GONE) {
+            llayout_coupon_stickerlist.setLayoutParams(lparam);
+            llayout_coupon_stickerlist.setBackgroundColor(Color.parseColor("#66000000"));
+            rv_stickerlist.setVisibility(View.VISIBLE);
+        } else {
+            llayout_coupon_stickerlist.setLayoutParams(lparam2);
+            llayout_coupon_stickerlist.setBackgroundColor(Color.parseColor("#00ff0000"));
+            rv_stickerlist.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -367,7 +456,7 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
 
     }
 
-    private void couponSave(){
+    private void couponSave() {
         llayout_couponview.setDrawingCacheEnabled(true);
         llayout_couponview.buildDrawingCache();
 
@@ -375,7 +464,7 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
         Bitmap saveBitmap = llayout_couponview.getDrawingCache();
 
         //sd_card 절대경로를 구함.
-        String fileFolderPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator +"ForCoupon";
+        String fileFolderPath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "ForCoupon";
         File file = new File(fileFolderPath);
         file.mkdir();// 디렉토리 없으면 생성, 있으면 통과
 
@@ -387,9 +476,15 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
             saveBitmap.compress(Bitmap.CompressFormat.JPEG, 70, output);
 
             sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(fileFolderPath)))); // 갤러리에 바로 올라오도록함
-        } catch(IOException e) {
+        } catch (IOException e) {
         } finally {
-            if(output!=null) { try{output.close();}catch(Exception e){e.printStackTrace();}}
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -404,35 +499,51 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
                     try {
 
                         imageUri = data.getData();
-                        imagePath = getPath(imageUri);
-                        imageName = getName(imageUri);
 
-                        Log.d("사진 추가 LOG", "Path : " + imagePath);
-                        Log.d("사진 추가 LOG", "Name : " + imageName);
 
-                        int n = 1; // 2048 * n
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        if (getBitmapOfWidth(imagePath) >= 8184) {
-                            options.inSampleSize = 4;
-                            n = 4;
-                        } else if (getBitmapOfWidth(imagePath) >= 4096) {
-                            options.inSampleSize = 2;
-                            n = 2;
-                        } else if (getBitmapOfHeight(imagePath) >= 8184) {
-                            options.inSampleSize = 4;
-                            n = 4;
-                        } else if (getBitmapOfHeight(imagePath) >= 4096) {
-                            options.inSampleSize = 2;
-                            n = 2;
-                        }
-
-                        Bitmap src = BitmapFactory.decodeFile(imagePath, options);
-                        Bitmap imageBm = Bitmap.createScaledBitmap(src, getBitmapOfWidth(imagePath) / n, getBitmapOfHeight(imagePath) / n, true);
-                        couponView.setBitmap(imageBm);
+                        CropImage.activity(imageUri)
+                                .setGuidelines(CropImageView.Guidelines.ON)
+                                .start(this);
 
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                }
+                break;
+
+            case CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE:
+                CropImage.ActivityResult result = CropImage.getActivityResult(data);
+                if (resultCode == RESULT_OK) {
+                    Uri croppedUri = result.getUri();
+                    imagePath = getPath(croppedUri);
+                    imageName = getName(croppedUri);
+
+                    Log.d("사진 추가 LOG", "Path : " + imagePath);
+                    Log.d("사진 추가 LOG", "Name : " + imageName);
+
+                    int n = 1; // 2048 * n
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    if (getBitmapOfWidth(imagePath) >= 8184) {
+                        options.inSampleSize = 4;
+                        n = 4;
+                    } else if (getBitmapOfWidth(imagePath) >= 4096) {
+                        options.inSampleSize = 2;
+                        n = 2;
+                    } else if (getBitmapOfHeight(imagePath) >= 8184) {
+                        options.inSampleSize = 4;
+                        n = 4;
+                    } else if (getBitmapOfHeight(imagePath) >= 4096) {
+                        options.inSampleSize = 2;
+                        n = 2;
+                    }
+
+                    Bitmap src = BitmapFactory.decodeFile(imagePath, options);
+                    Bitmap imageBm = Bitmap.createScaledBitmap(src, getBitmapOfWidth(imagePath) / n, getBitmapOfHeight(imagePath) / n, true);
+                    //couponView.setBitmap(imageBm);
+                    couponView.setImageBitmap(imageBm);
+                } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                    Exception error = result.getError();
+                    Log.d("Cropped Error", "E1 : " + error);
                 }
                 break;
         }
@@ -531,37 +642,35 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
         }
     }
 
-    // 추가한 콘텐츠 리스트
-    public class ContentlistAdapter extends RecyclerView.Adapter<ContentlistAdapter.ViewHolder> {
+    // 추가한 스티커 리스트
+    public class StickerlistAdapter extends RecyclerView.Adapter<StickerlistAdapter.ViewHolder> {
 
-        private List<ContentInfo> verticalList;
+        private List<StickerView> verticalList;
 
         public class ViewHolder extends RecyclerView.ViewHolder {
-            TextView tv_contentlist_text;
-            TextView tv_contentlist_size;
-            TextView tv_contentlist_color;
-            Button btn_contentlist_adjust;
-            Button btn_contentlist_delete;
+            TextView tv_stickerlist_id;
+            TextView tv_stickerlist_type;
+            TextView tv_stickerlist_transparent;
+            Button btn_stickerlist_delete;
 
             public ViewHolder(View view) {
                 super(view);
 
-                tv_contentlist_text = (TextView) view.findViewById(R.id.tv_contentlist_text);
-                tv_contentlist_size = (TextView) view.findViewById(R.id.tv_contentlist_size);
-                tv_contentlist_color = (TextView) view.findViewById(R.id.tv_contentlist_color);
-                btn_contentlist_adjust = (Button) view.findViewById(R.id.btn_contentlist_adjust);
-                btn_contentlist_delete = (Button) view.findViewById(R.id.btn_contentlist_delete);
+                tv_stickerlist_id = (TextView) view.findViewById(R.id.tv_stickerlist_id);
+                tv_stickerlist_type = (TextView) view.findViewById(R.id.tv_stickerlist_type);
+                tv_stickerlist_transparent = (TextView) view.findViewById(R.id.tv_stickerlist_transparent);
+                btn_stickerlist_delete = (Button) view.findViewById(R.id.btn_stickerlist_delete);
             }
         }
 
-        public ContentlistAdapter(List<ContentInfo> verticalList) {
+        public StickerlistAdapter(List<StickerView> verticalList) {
             this.verticalList = verticalList;
         }
 
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View itemView = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.rv_contentlist, parent, false);
+                    .inflate(R.layout.rv_stickerlist, parent, false);
 
             return new ViewHolder(itemView);
         }
@@ -569,13 +678,28 @@ public class App_couponedit extends AppCompatActivity implements ColorPickerDial
         @Override
         public void onBindViewHolder(final ViewHolder holder, final int position) {
 
-            final int contentId = contentlist.get(position).getId();
-            final String contentName = contentlist.get(position).getName();
+            final int id = position;
+            final String type = verticalList.get(position).getType();
+
+            holder.tv_stickerlist_id.setText(String.valueOf(id));
 
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    verticalList.get(position).setOnTouch(true);
+                }
+            });
 
+            holder.tv_stickerlist_type.setText(type);
+
+            holder.tv_stickerlist_transparent.setText("투명도 : " + String.valueOf(verticalList.get(position).getTransparentPercent()));
+
+            holder.btn_stickerlist_delete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    llayout_couponview.removeView(verticalList.get(position));
+                    verticalList.remove(position);
+                    rv_stickeradapter.notifyDataSetChanged();
                 }
             });
         }
