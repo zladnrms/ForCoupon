@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "43774082168",
+    "firebase_url": "https://forcoupon-8efda.firebaseio.com",
+    "project_id": "forcoupon-8efda",
+    "storage_bucket": "forcoupon-8efda.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43774082168:android:2a9655416201f482",
+        "android_client_info": {
+          "package_name": "zladnrms.defytech.forcoupon"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "43774082168-1fmivnorpaun0soojd65f6ov4kmj0di7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "zladnrms.defytech.forcoupon",
+            "certificate_hash": "524f978070172a64da1d716d84211d5132d0de3e"
+          }
+        },
+        {
+          "client_id": "43774082168-hl1hpn6vf2osaqmmnnnre642at2l1juv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBubHIQFU1Beujt_8Z-BstE4NOtfKcmaY"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "43774082168-hl1hpn6vf2osaqmmnnnre642at2l1juv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
