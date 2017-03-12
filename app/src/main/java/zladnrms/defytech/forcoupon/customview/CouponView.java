@@ -3,25 +3,11 @@ package zladnrms.defytech.forcoupon.customview;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.RectF;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.FloatMath;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
 import android.widget.ImageView;
-import android.widget.Toast;
-
-import java.util.ArrayList;
-
-import zladnrms.defytech.forcoupon.App_couponedit;
-import zladnrms.defytech.forcoupon.R;
 
 /**
  * Created by kim on 2016-05-31.
@@ -52,7 +38,6 @@ public class CouponView extends ImageView {
 
         // 쿠폰 사진이 있으면
         if (this.bitmap != null) {
-
             canvas.drawBitmap(this.bitmap, 0, 0, null);
         }
 

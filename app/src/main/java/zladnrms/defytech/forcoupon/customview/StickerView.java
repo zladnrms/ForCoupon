@@ -9,21 +9,18 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
-
-import com.google.android.gms.tasks.Task;
 
 import zladnrms.defytech.forcoupon.R;
 
 /**
  * Created by kim on 2016-05-31.
  */
-public class StickerView extends ImageView implements View.OnTouchListener {
+public class StickerView extends ImageView implements View.OnTouchListener{
 
     private Context context;
 
@@ -74,7 +71,16 @@ public class StickerView extends ImageView implements View.OnTouchListener {
 
         setOnTouchListener(this);
         setScaleType(ScaleType.MATRIX);
+
+
     }
+
+    final Handler handler = new Handler();
+    Runnable mLongPressed = new Runnable() {
+        public void run() {
+            Log.d("TAKE", "Long press!!");
+        }
+    };
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -231,6 +237,8 @@ public class StickerView extends ImageView implements View.OnTouchListener {
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
 
                 case MotionEvent.ACTION_DOWN:
+                    handler.postDelayed(mLongPressed, 1000); // 롱 프레스 시도
+
                     savedMatrix.set(matrix);
                     start.set(event.getX(), event.getY());
                     mode = DRAG;
@@ -238,6 +246,8 @@ public class StickerView extends ImageView implements View.OnTouchListener {
                     break;
 
                 case MotionEvent.ACTION_POINTER_DOWN:
+                    handler.removeCallbacks(mLongPressed); // 롱 프레스 해제
+
                     oldDist = spacing(event);
                     if (oldDist > 10f) {
                         savedMatrix.set(matrix);
@@ -253,16 +263,22 @@ public class StickerView extends ImageView implements View.OnTouchListener {
                     break;
 
                 case MotionEvent.ACTION_UP:
+                    handler.removeCallbacks(mLongPressed); // 롱 프레스 해제
+
                     onHelperTouch = false;
                     onTouch = false;
                     invalidate();
 
                 case MotionEvent.ACTION_POINTER_UP:
+                    handler.removeCallbacks(mLongPressed); // 롱 프레스 해제
+
                     mode = NONE;
                     lastEvent = null;
                     break;
 
                 case MotionEvent.ACTION_MOVE:
+                    handler.removeCallbacks(mLongPressed); // 롱 프레스 해제
+
                     if (mode == DRAG) {
                         matrix.set(savedMatrix);
                         float dx = event.getX() - start.x;

@@ -37,6 +37,11 @@ dependencies {
     compile 'com.jrummyapps:colorpicker:2.0.4'
     compile 'com.android.support:design:25.1.0'
     compile 'com.android.support:support-v4:25.1.0'
-    compile 'com.theartofdev.edmodo:android-image-cropper:2.3.+'
+    compile 'com.theartofdev.edmodo:android-image-cropper:2.3.+' // 이미지 CROPPER
+    compile 'com.orhanobut:logger:1.15' // 로그 오픈소스
+    compile 'com.google.firebase:firebase-messaging:10.0.1' // FCM
+
     testCompile 'junit:junit:4.12'
 }
+
+apply plugin: 'com.google.gms.google-services'
