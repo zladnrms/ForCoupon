@@ -26,7 +26,7 @@ import zladnrms.defytech.forcoupon.TestActivity;
 import zladnrms.defytech.forcoupon.R;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, TabLayout.OnTabSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, TabLayout.OnTabSelectedListener{
 
     private TabLayout tabLayout;
     private ViewPager viewPager;
@@ -36,43 +36,40 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // FCM 동작 처리
-        //FirebaseMessaging.getInstance().subscribeToTopic("chat");
-        //FirebaseInstanceId.getInstance().getToken();
-
-        tabLayout = (TabLayout) findViewById(R.id.tabLayout);
+        //Tablayout
+        tabLayout = (TabLayout) findViewById(R.id.tabLayout);;
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
+        // ViewPager
         viewPager = (ViewPager) findViewById(R.id.main_viewpager);
+
         adapter = new Pager(getSupportFragmentManager(), tabLayout.getTabCount());
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
+        viewPager.setOffscreenPageLimit(2);
         viewPager.setAdapter(adapter);
+
+        // TabSelectedListener 달기
         tabLayout.setOnTabSelectedListener(this);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, CouponEditActivity.class);
-                startActivity(intent);
-            }
-        });
-
+        // DrawerLayout 처리
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
+        // Navigation DrawerHeader 부분 처리
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        View hView = navigationView.getHeaderView(0); // Hedaer 객체 생성
         navigationView.setNavigationItemSelectedListener(this);
-
-        //Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show();
     }
 
+    // BackPressed 시 DrawerLayout 처리
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -83,17 +80,16 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    // DrawerLayout 버튼 처리
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
         int id = item.getItemId();
 
         if (id == R.id.nav_camera) {
             // Handle the camera action
         } else if (id == R.id.nav_gallery) {
-            Intent intent = new Intent(MainActivity.this, TestActivity.class);
-            startActivity(intent);
+
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
@@ -109,22 +105,25 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    // ViewPager 처리
     public class Pager extends FragmentStatePagerAdapter {
+
         int tabCount;
 
-        public Pager(FragmentManager fm, int tabCount) {
+        public Pager(android.support.v4.app.FragmentManager fm, int tabCount) {
             super(fm);
             this.tabCount = tabCount;
         }
 
+        @Override
         public Fragment getItem(int position) {
             switch (position) {
                 case 0:
-                    HomeFragment homeFragment = new HomeFragment();
-                    return homeFragment;
+                    HomeFragment homeTab = new HomeFragment();
+                    return homeTab;
                 case 1:
-                    BoardFragment boardFragment = new BoardFragment();
-                    return boardFragment;
+                    BoardFragment boardTab = new BoardFragment();
+                    return boardTab;
                 default:
                     return null;
             }
@@ -134,6 +133,7 @@ public class MainActivity extends AppCompatActivity
             super.destroyItem(container, position, object);
         }
 
+        @Override
         public int getCount() {
             return tabCount;
         }
@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onTabSelected(TabLayout.Tab tab) {
-
+        viewPager.setCurrentItem(tab.getPosition());
     }
 
     @Override

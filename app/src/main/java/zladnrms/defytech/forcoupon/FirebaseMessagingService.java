@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 
 import com.google.firebase.messaging.RemoteMessage;
+import com.orhanobut.logger.Logger;
 
 import zladnrms.defytech.forcoupon.main.MainActivity;
 
@@ -20,6 +21,18 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
     // [START receive_message]
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
+
+        Logger.t("FCM-RECEIVER").d(remoteMessage.getFrom());
+
+        // Check if message contains a data payload.
+        if (remoteMessage.getData().size() > 0) {
+            Logger.t("FCM-RECEIVER").d(remoteMessage.getData());
+        }
+
+        // Check if message contains a notification payload.
+        if (remoteMessage.getNotification() != null) {
+            Logger.t("FCM-RECEIVER").d(remoteMessage.getNotification().getBody());
+        }
 
         //추가한것
         sendNotification(remoteMessage.getData().get("message"));
@@ -33,11 +46,11 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("FCM Push Test")
-                .setContentText(messageBody)
+                .setSmallIcon(R.mipmap.ic_launcher) // NOTI 옆에 아이콘
+                .setContentTitle("FCM 수신") // NOTI 제목
+                .setContentText(messageBody) // NOTI 내용
                 .setAutoCancel(true)
-                .setSound(defaultSoundUri)
+                .setSound(defaultSoundUri) // NOTI 소리
                 .setContentIntent(pendingIntent);
 
         NotificationManager notificationManager =

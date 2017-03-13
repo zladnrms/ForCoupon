@@ -40,7 +40,8 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <activity android:name=".chat.ChatRoomActivity" />
+        <activity android:name=".chat.ChatRoomActivity"
+            android:windowSoftInputMode="adjustResize"/>
 
         <!-- Crop Image Activity -->
         <activity
@@ -61,8 +62,10 @@
             <!-- FCM 서비스 끝 -->
         </service>
 
-        <activity android:name=".member.LoginActivity" />
-        <activity android:name=".member.JoinActivity"></activity>
+        <activity android:name=".member.LoginActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".member.JoinActivity"
+            android:windowSoftInputMode="adjustResize"/>
     </application>
 
 </manifest>
